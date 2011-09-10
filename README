@@ -6,5 +6,13 @@
   tsm = TSMAccounting::Database.new(File.new('data/TradeSkillMaster_Accounting.lua').read)
   tsm.to_csv('/tmp/accounting.csv')
 
+== Notes ==
+The Transaction#usable_price() method outputs the price as a float. Copper >50 
+is rounded up to 1s. If the transaction was worth less than 50c, you'll get 0.1
+instead of 0.0.
+
+If you need greater precision, price is the copper value of the transaction. It
+is included in the CSV output.
+
 == Thanks ==
 Sapu & The Consortium <http://consortium.stormspire.net/>.

@@ -50,7 +50,7 @@ module TSMAccounting
 
     def to_csv(output_file)
       CSV.open(output_file, 'w') do |f|
-        f << ['Realm','Faction','Transaction Type','Time','Item','Quantity','Stack Size','Price (c)','Buyer','Seller']
+        f << ['Realm','Faction','Transaction Type','Time','Item','Quantity','Stack Size','Price (g)','Price (c)','Buyer','Seller']
 
         @data.each do |realm,factions|
           factions.each do |faction,ropes|
@@ -62,6 +62,7 @@ module TSMAccounting
                   row << item.name
                   row << tx.quantity
                   row << tx.stack_size
+                  row << tx.usable_price
                   row << tx.price
                   row << tx.buyer
                   row << tx.seller
@@ -223,6 +224,26 @@ module TSMAccounting
       @buyer = d[4] 
       @seller = d[5] 
     end # initialize
+
+    def usable_price
+      price = @price.to_s.rjust(5,'0')
+      parts = {
+        'gold' => price[0..-5].to_i,
+        'silver' => price[-4..2].to_i,
+        'copper' => price[-2..2].to_i
+      }
+
+      # Round up the copper.
+      parts['silver'] += 1 if parts['copper'] > 50
+
+      # If this was a <50c transaction, set silver to 1 so
+      # it doesn't confuse people.
+      if parts['gold'] == 0 and parts['silver'] == 0 and parts['copper'] < 50
+        parts['silver'] = 1
+      end
+      
+      return "#{parts['gold']}.#{parts['silver']}".to_f
+    end
 
     protected
     def decode(value)
