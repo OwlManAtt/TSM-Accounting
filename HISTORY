@@ -1,0 +1,3 @@
+== 0.8.0 ==
+* Initial release. The TSM accounting saved variable file can be transmuted
+  into a CSV. You can also access its contents in a nice (messy) datastructure.
