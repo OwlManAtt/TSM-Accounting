@@ -1,3 +1,7 @@
+== 0.9.0 ==
+* I am the worst QA engineer in the entire world. Buyer and seller columns
+  are now correct for purchase transactions.
+
 == 0.8.0 ==
 * Initial release. The TSM accounting saved variable file can be transmuted
   into a CSV. You can also access its contents in a nice (messy) datastructure.

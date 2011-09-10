@@ -28,7 +28,7 @@
 require 'csv'
 
 module TSMAccounting
-  VERSION = '0.8.0'
+  VERSION = '0.9.0'
 
   class Database
     attr_reader :data
@@ -42,8 +42,8 @@ module TSMAccounting
         @data[realm_name] = {} unless @data.has_key? realm_name
         realm_data.each do |faction_name,faction_data|
           @data[realm_name][faction_name] = {} unless @data[realm_name].has_key? faction_name
-          @data[realm_name][faction_name]['sale'] = parse_rope(faction_data['sell'])
-          @data[realm_name][faction_name]['purchase'] = parse_rope(faction_data['buy'])
+          @data[realm_name][faction_name]['sale'] = parse_rope(faction_data['sell'],'sale')
+          @data[realm_name][faction_name]['purchase'] = parse_rope(faction_data['buy'],'purchase')
         end # faction
       end # realms
     end # initialize
@@ -163,10 +163,10 @@ module TSMAccounting
       return data
     end # extract_data
 
-    def parse_rope(rope)
+    def parse_rope(rope,type)
       list = {}
       rope.split('?').each do |row|
-        item = Item.new(row)
+        item = Item.new(row,type)
 
         if list.has_key? item.name
           # merge
@@ -182,7 +182,7 @@ module TSMAccounting
   class Item
     attr_reader :name, :transactions
 
-    def initialize(item)
+    def initialize(item,type)
       encoded_item, encoded_records = item.split '!'
      
       if encoded_item[0,1] == 'x'
@@ -190,7 +190,7 @@ module TSMAccounting
       else
         @name = decode_link(encoded_item)
       end    
-      @transactions = encoded_records.split('@').map {|record| Transaction.new(record) }
+      @transactions = encoded_records.split('@').map {|record| Transaction.new(record,type) }
       @transactions ||= []
     end # initialize
 
@@ -214,15 +214,21 @@ module TSMAccounting
   class Transaction
     attr_reader :stack_size, :quantity, :datetime, :price, :buyer, :seller
 
-    def initialize(encoded_string)
+    def initialize(encoded_string,type)
       d = encoded_string.split('#')
 
       @stack_size = decode(d[0])
       @quantity = decode(d[1])
       @datetime = Time.at(decode(d[2]))
       @price = decode(d[3])
-      @buyer = d[4] 
-      @seller = d[5] 
+
+      if type == 'purchase'
+        @buyer = d[5]
+        @seller = d[4]
+      else
+        @buyer = d[4] 
+        @seller = d[5] 
+      end
     end # initialize
 
     def usable_price
