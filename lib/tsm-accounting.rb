@@ -28,9 +28,12 @@
 require 'csv'
 
 module TSMAccounting
-  VERSION = '0.9.0'
+  VERSION = '1.0.0'
 
   class Database
+    class InvalidDatabaseFileException < RuntimeError
+    end
+
     attr_reader :data
     # Expects the whole TradeSkillMaster_Accounting.lua file
     # as a string.
@@ -101,11 +104,14 @@ module TSMAccounting
       #       my file since the only two lines of consequence are the ones I'm
       #       going to be saving anyway but it may be a good idea if there's a
       #       goblin operating on both factions for six realms...
-      
+     
+      header_seen = false 
       depth = 0
       realm, faction = nil
       data = {}
       db.split("\n").each do |line|
+        header_seen = true if line =~ /^\s*TradeSkillMaster_AccountingDB\s*=\s*\{/
+
         if line =~ /^\s*\["factionrealm"\]/
           depth = 1
           next
@@ -159,6 +165,10 @@ module TSMAccounting
           next
         end
       end # line depth0
+
+      if !header_seen
+        raise InvalidDatabaseFileException 'Bad file detected.'
+      end
 
       return data
     end # extract_data

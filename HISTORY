@@ -1,3 +1,8 @@
+== 1.0.0 ==
+* Incorrect files (incorrect is defined by the lack of the 
+  'TradeSkillMaster_AccountingDB = {' line) are now detected and an exception 
+  is raised.
+
 == 0.9.0 ==
 * I am the worst QA engineer in the entire world. Buyer and seller columns
   are now correct for purchase transactions.
