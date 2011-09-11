@@ -1,3 +1,6 @@
+== 1.0.1 ==
+* Worst QA engineer. Worst.
+
 == 1.0.0 ==
 * Incorrect files (incorrect is defined by the lack of the 
   'TradeSkillMaster_AccountingDB = {' line) are now detected and an exception 

@@ -28,7 +28,7 @@
 require 'csv'
 
 module TSMAccounting
-  VERSION = '1.0.0'
+  VERSION = '1.0.1'
 
   class Database
     class InvalidDatabaseFileException < RuntimeError
@@ -167,7 +167,7 @@ module TSMAccounting
       end # line depth0
 
       if !header_seen
-        raise InvalidDatabaseFileException 'Bad file detected.'
+        raise InvalidDatabaseFileException, 'Bad file detected.'
       end
 
       return data
