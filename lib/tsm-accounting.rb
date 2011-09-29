@@ -28,7 +28,7 @@
 require 'csv'
 
 module TSMAccounting
-  VERSION = '1.0.1'
+  VERSION = '1.1.0'
 
   class Database
     class InvalidDatabaseFileException < RuntimeError
@@ -53,7 +53,7 @@ module TSMAccounting
 
     def to_csv(output_file)
       CSV.open(output_file, 'w') do |f|
-        f << ['Realm','Faction','Transaction Type','Time','Item','Quantity','Stack Size','Price (g)','Price (c)','Buyer','Seller']
+        f << ['Realm','Faction','Transaction Type','Time','Item ID','Item Name','Quantity','Stack Size','Price (g)','Price (c)','Buyer','Seller']
 
         @data.each do |realm,factions|
           factions.each do |faction,ropes|
@@ -62,6 +62,7 @@ module TSMAccounting
                 item.transactions.each do |tx|
                   row = [realm,faction,type] 
                   row << tx.datetime.strftime('%Y-%m-%d %k:%M:%S')
+                  row << item.id
                   row << item.name
                   row << tx.quantity
                   row << tx.stack_size
@@ -190,15 +191,15 @@ module TSMAccounting
   end # Database
 
   class Item
-    attr_reader :name, :transactions
+    attr_reader :id, :name, :transactions
 
     def initialize(item,type)
       encoded_item, encoded_records = item.split '!'
      
       if encoded_item[0,1] == 'x'
-        @name = decode_code(encoded_item)
+        @id, @name = decode_code(encoded_item)
       else
-        @name = decode_link(encoded_item)
+        @id, @name = decode_link(encoded_item)
       end    
       @transactions = encoded_records.split('@').map {|record| Transaction.new(record,type) }
       @transactions ||= []
@@ -207,8 +208,14 @@ module TSMAccounting
     protected 
     def decode_link(text)
       colour, code, name = text.split '|'
+      
+      # In the case of items with random enchantments (ie
+      # Jasper Ring of the Bedrock), the item ID is the same for
+      # all rings (52310) but there is an additional attribute
+      # seperated by a colon to identify the enchantment.
 
-      return name 
+      id, ench = code.split ':'
+      return [TSMAccounting.decode(id), name]
     end # decode_link
 
     # I _think_ this will only get called if the item link cannot
@@ -217,7 +224,7 @@ module TSMAccounting
     #
     # In theory, this shouldn't get called...
     def decode_code(text)
-      return text 
+      return [nil, text]
     end # decode_string
   end # item
 
@@ -227,10 +234,10 @@ module TSMAccounting
     def initialize(encoded_string,type)
       d = encoded_string.split('#')
 
-      @stack_size = decode(d[0])
-      @quantity = decode(d[1])
-      @datetime = Time.at(decode(d[2]))
-      @price = decode(d[3])
+      @stack_size = TSMAccounting.decode(d[0])
+      @quantity = TSMAccounting.decode(d[1])
+      @datetime = Time.at(TSMAccounting.decode(d[2]))
+      @price = TSMAccounting.decode(d[3])
 
       if type == 'purchase'
         @buyer = d[5]
@@ -261,21 +268,21 @@ module TSMAccounting
       return "#{parts['gold']}.#{parts['silver']}".to_f
     end
 
-    protected
-    def decode(value)
-      alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_="
-      base = alpha.length
+  end # Transaction
 
-      i = value.length - 1
-      result = 0
-      value.each_char do |w|
-        if w.match(/([A-Za-z0-9_=])/)
-          result += (alpha.index(w)) * (base**i)
-          i -= 1
-        end
+  def self.decode(value)
+    alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_="
+    base = alpha.length
+
+    i = value.length - 1
+    result = 0
+    value.each_char do |w|
+      if w.match(/([A-Za-z0-9_=])/)
+        result += (alpha.index(w)) * (base**i)
+        i -= 1
       end
+    end
 
-      return result
-    end # decode
-    end # Transaction
+    return result
+  end # decode
 end # TSMAccounting
