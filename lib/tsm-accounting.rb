@@ -142,7 +142,7 @@ module TSMAccounting
             line.gsub!(/",\s*$/,'').gsub!(/^\s*\["(buy|sell)DataRope"\]\s*=\s*"/,'')
             data[realm][faction][match[1]] = line
             next
-          elsif line =~ /^\s*\["/
+          elsif line =~ /^\s*\[.*?\] = {"/
             depth = 3
             next
           end
