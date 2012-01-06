@@ -45,8 +45,12 @@ module TSMAccounting
         @data[realm_name] = {} unless @data.has_key? realm_name
         realm_data.each do |faction_name,faction_data|
           @data[realm_name][faction_name] = {} unless @data[realm_name].has_key? faction_name
-          @data[realm_name][faction_name]['sale'] = parse_rope(faction_data['sell'],'sale')
-          @data[realm_name][faction_name]['purchase'] = parse_rope(faction_data['buy'],'purchase')
+          if faction_data['sell']
+            @data[realm_name][faction_name]['sale'] = parse_rope(faction_data['sell'],'sale')
+          end
+          if faction_data['buy']
+            @data[realm_name][faction_name]['purchase'] = parse_rope(faction_data['buy'],'purchase')
+          end
         end # faction
       end # realms
     end # initialize
